@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Search,
@@ -13,15 +13,19 @@ import {
   ThumbsDown,
   Key,
   Lightbulb,
+  ChevronDown,
+  ChevronUp,
+  Eye,
+  EyeOff,
 } from "lucide-react";
-
-interface AnalysisResult {
-  matchScore: number;
-  strengths: string[];
-  weaknesses: string[];
-  missingKeywords: string[];
-  suggestions: string[];
-}
+import {
+  getApiKey,
+  setApiKey,
+  validateApiKey,
+  analyzeResume,
+  optimizeResume,
+} from "@/lib/deepseek-client";
+import type { AnalysisResult } from "@/lib/deepseek-client";
 
 export default function ResumeOptimizer() {
   const [resume, setResume] = useState("");
@@ -30,33 +34,72 @@ export default function ResumeOptimizer() {
 
   const [analyzeLoading, setAnalyzeLoading] = useState(false);
   const [optimizeLoading, setOptimizeLoading] = useState(false);
-  const [analyzeResult, setAnalyzeResult] = useState<AnalysisResult | null>(null);
+  const [analyzeResult, setAnalyzeResult] = useState<AnalysisResult | null>(
+    null
+  );
   const [optimizeResult, setOptimizeResult] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+
+  // API key state
+  const [apiKeyOpen, setApiKeyOpen] = useState(false);
+  const [apiKeyInput, setApiKeyInput] = useState("");
+  const [keyValid, setKeyValid] = useState<boolean | null>(null);
+  const [validating, setValidating] = useState(false);
+  const [showKey, setShowKey] = useState(false);
+
+  // Load saved key on mount
+  useEffect(() => {
+    const saved = getApiKey();
+    if (saved) {
+      setApiKeyInput(saved);
+      setKeyValid(true);
+    }
+  }, []);
+
+  const handleSaveKey = async () => {
+    const trimmed = apiKeyInput.trim();
+    if (!trimmed) return;
+    setValidating(true);
+    setKeyValid(null);
+    try {
+      const valid = await validateApiKey(trimmed);
+      setKeyValid(valid);
+      if (valid) {
+        setApiKey(trimmed);
+      }
+    } catch {
+      setKeyValid(false);
+    } finally {
+      setValidating(false);
+    }
+  };
+
+  const getApiKeyOrError = (): string | null => {
+    const key = getApiKey();
+    if (!key) {
+      setError("请先配置 DeepSeek API Key（点击上方展开面板）");
+      return null;
+    }
+    return key;
+  };
 
   const handleAnalyze = async () => {
     if (!resume.trim() || !jobDescription.trim()) {
       setError("请输入简历和职位描述");
       return;
     }
+    const apiKey = getApiKeyOrError();
+    if (!apiKey) return;
+
     setError(null);
     setOptimizeResult(null);
     setAnalyzeLoading(true);
     try {
-      const res = await fetch("/api/analyze", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ resume, jobDescription }),
-      });
-      const data = await res.json();
-      if (data.error) {
-        setError(data.error);
-      } else {
-        setAnalyzeResult(data);
-      }
-    } catch {
-      setError("网络错误，请重试");
+      const data = await analyzeResume(apiKey, resume, jobDescription);
+      setAnalyzeResult(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "网络错误，请重试");
     } finally {
       setAnalyzeLoading(false);
     }
@@ -67,23 +110,22 @@ export default function ResumeOptimizer() {
       setError("请输入简历和职位描述");
       return;
     }
+    const apiKey = getApiKeyOrError();
+    if (!apiKey) return;
+
     setError(null);
     setAnalyzeResult(null);
     setOptimizeLoading(true);
     try {
-      const res = await fetch("/api/optimize", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ resume, jobDescription, language }),
-      });
-      const data = await res.json();
-      if (data.error) {
-        setError(data.error);
-      } else {
-        setOptimizeResult(data.result);
-      }
-    } catch {
-      setError("网络错误，请重试");
+      const result = await optimizeResume(
+        apiKey,
+        resume,
+        jobDescription,
+        language
+      );
+      setOptimizeResult(result);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "网络错误，请重试");
     } finally {
       setOptimizeLoading(false);
     }
@@ -190,6 +232,79 @@ export default function ResumeOptimizer() {
           </p>
         </div>
 
+        {/* API Key Panel */}
+        <div className="mb-6 bg-white rounded-xl border border-gray-200 overflow-hidden">
+          <button
+            onClick={() => setApiKeyOpen(!apiKeyOpen)}
+            className="w-full flex items-center justify-between px-5 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+          >
+            <span className="flex items-center gap-2">
+              🔑 DeepSeek API Key
+              <span className="text-xs text-gray-400">（免费获取: platform.deepseek.com）</span>
+              {keyValid === true && <span className="text-green-500 text-base">✓</span>}
+              {keyValid === false && <span className="text-red-500 text-base">✗</span>}
+            </span>
+            {apiKeyOpen ? (
+              <ChevronUp className="w-4 h-4 text-gray-400" />
+            ) : (
+              <ChevronDown className="w-4 h-4 text-gray-400" />
+            )}
+          </button>
+          <AnimatePresence>
+            {apiKeyOpen && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: "auto", opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="overflow-hidden"
+              >
+                <div className="px-5 pb-4 flex gap-2">
+                  <div className="relative flex-1">
+                    <input
+                      type={showKey ? "text" : "password"}
+                      value={apiKeyInput}
+                      onChange={(e) => {
+                        setApiKeyInput(e.target.value);
+                        setKeyValid(null);
+                      }}
+                      placeholder="sk-..."
+                      className="w-full px-4 py-2 pr-10 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowKey(!showKey)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    >
+                      {showKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                  <button
+                    onClick={handleSaveKey}
+                    disabled={validating || !apiKeyInput.trim()}
+                    className="px-4 py-2 text-sm font-medium text-white bg-purple-600 rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
+                  >
+                    {validating ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : null}
+                    {validating ? "验证中..." : "保存并验证"}
+                  </button>
+                </div>
+                {keyValid === true && (
+                  <div className="px-5 pb-3 text-xs text-green-600">
+                    ✓ API Key 有效，已保存到本地
+                  </div>
+                )}
+                {keyValid === false && (
+                  <div className="px-5 pb-3 text-xs text-red-600">
+                    ✗ API Key 无效，请检查后重试
+                  </div>
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+
         {/* Input area */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Resume textarea */}
@@ -199,7 +314,7 @@ export default function ResumeOptimizer() {
             </label>
             <textarea
               className="w-full h-64 p-4 bg-white border border-gray-200 rounded-xl text-sm text-gray-800 placeholder-gray-400 resize-none focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent transition-all"
-              placeholder="粘贴你的简历内容...&#10;&#10;张三&#10;前端开发工程师 | 3年经验&#10;&#10;教育背景：XXX大学 计算机科学&#10;工作经历：XXX公司 前端开发&#10;..."
+              placeholder={"粘贴你的简历内容...\n\n张三\n前端开发工程师 | 3年经验\n\n教育背景：XXX大学 计算机科学\n工作经历：XXX公司 前端开发\n..."}
               value={resume}
               onChange={(e) => setResume(e.target.value)}
             />
@@ -212,7 +327,7 @@ export default function ResumeOptimizer() {
             </label>
             <textarea
               className="w-full h-64 p-4 bg-white border border-gray-200 rounded-xl text-sm text-gray-800 placeholder-gray-400 resize-none focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent transition-all"
-              placeholder="粘贴目标职位描述...&#10;&#10;职位：高级前端开发工程师&#10;要求：3年以上React开发经验...&#10;..."
+              placeholder={"粘贴目标职位描述...\n\n职位：高级前端开发工程师\n要求：3年以上React开发经验\n..."}
               value={jobDescription}
               onChange={(e) => setJobDescription(e.target.value)}
             />
