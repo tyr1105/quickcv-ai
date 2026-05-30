@@ -13,14 +13,14 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "QuickCV - AI简历优化器 | 免费简历匹配度分析+一键优化",
+  title: "QuickCV - 免费AI简历优化器 | 简历匹配度分析+ATS关键词一键优化",
   description:
-    "QuickCV是免费的AI简历优化工具。粘贴简历和职位描述，AI秒出优化版简历。匹配度打分、ATS关键词优化、中英文支持。零成本，无需注册。",
+    "免费AI简历优化工具：粘贴简历和职位描述，秒出优化版简历。智能匹配JD关键词，ATS系统友好排版，面试通过率提升50%+。支持中英文，无需注册。",
   keywords: [
-    "简历优化", "AI简历", "ATS", "求职", "resume optimizer",
-    "job matching", "简历模板", "简历怎么写", "求职攻略",
-    "AI工具", "免费简历优化", "简历匹配", "春招", "秋招",
-    "应届生简历", "跳槽简历", "resume builder"
+    "简历优化", "简历修改", "简历润色", "AI简历", "简历匹配",
+    "ATS简历", "免费简历优化", "求职", "春招", "秋招",
+    "简历怎么写", "简历关键词", "应届生简历", "跳槽简历",
+    "resume optimizer", "job matching", "ATS resume", "简历模板"
   ],
   openGraph: {
     title: "QuickCV - 免费AI简历优化器 | 粘贴简历秒出优化版",
