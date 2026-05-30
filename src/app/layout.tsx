@@ -57,6 +57,11 @@ export const metadata: Metadata = {
   },
   alternates: {
     canonical: "https://tyr1105.github.io/quickcv-ai/",
+    languages: {
+      "zh-CN": "https://tyr1105.github.io/quickcv-ai/",
+      "en": "https://tyr1105.github.io/quickcv-ai/",
+      "x-default": "https://tyr1105.github.io/quickcv-ai/",
+    },
   },
 };
 
@@ -65,11 +70,47 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const jsonLd = {
+  const jsonLdWebApp = {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    name: "QuickCV - AI Resume Optimizer",
+    alternateName: "QuickCV AI简历优化器",
+    description:
+      "Free AI-powered resume optimization tool. Paste your resume and job description to get an optimized version instantly. Features match scoring, ATS keyword optimization, and bilingual support.",
+    url: "https://tyr1105.github.io/quickcv-ai/",
+    applicationCategory: "BusinessApplication",
+    operatingSystem: "Any",
+    browserRequirements: "Requires JavaScript. Requires HTML5.",
+    offers: {
+      "@type": "Offer",
+      price: "0",
+      priceCurrency: "USD",
+    },
+    featureList: [
+      "AI resume match scoring (0-100)",
+      "ATS keyword auto-matching",
+      "One-click resume optimization",
+      "Bilingual support (Chinese & English)",
+      "Quantified achievement optimization",
+      "Strong action verb rewriting",
+    ],
+    audience: {
+      "@type": "Audience",
+      audienceType: "Job seekers, career changers, students",
+    },
+    author: {
+      "@type": "Organization",
+      name: "QuickCV",
+      url: "https://github.com/tyr1105/quickcv-ai",
+    },
+  };
+
+  const jsonLdSoftwareApp = {
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
     name: "QuickCV",
-    description: "AI驱动的免费简历优化工具，支持匹配度分析、ATS关键词优化、中英双语",
+    description:
+      "AI驱动的免费简历优化工具，支持匹配度分析、ATS关键词优化、中英双语",
     url: "https://tyr1105.github.io/quickcv-ai/",
     applicationCategory: "BusinessApplication",
     operatingSystem: "Web",
@@ -93,7 +134,11 @@ export default function RootLayout({
       <head>
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdWebApp) }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdSoftwareApp) }}
         />
         <meta name="google-site-verification" content="quickcv-ai" />
       </head>
