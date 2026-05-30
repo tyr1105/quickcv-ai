@@ -19,23 +19,41 @@ export const metadata: Metadata = {
   keywords: [
     "简历优化", "AI简历", "ATS", "求职", "resume optimizer",
     "job matching", "简历模板", "简历怎么写", "求职攻略",
-    "AI工具", "免费简历优化", "简历匹配", "春招", "秋招"
+    "AI工具", "免费简历优化", "简历匹配", "春招", "秋招",
+    "应届生简历", "跳槽简历", "resume builder"
   ],
   openGraph: {
-    title: "QuickCV - 免费AI简历优化器",
-    description: "粘贴简历+职位描述，AI秒出优化版。匹配度分析+ATS关键词优化。完全免费！",
+    title: "QuickCV - 免费AI简历优化器 | 粘贴简历秒出优化版",
+    description: "AI驱动的免费简历优化工具。粘贴简历+职位描述，即刻获得匹配度评分、ATS关键词优化、量化成就。支持中英文。完全免费，无需注册！",
     type: "website",
     url: "https://tyr1105.github.io/quickcv-ai/",
     siteName: "QuickCV",
+    locale: "zh_CN",
+    images: [
+      {
+        url: "https://opengraph.githubassets.com/1/tyr1105/quickcv-ai",
+        width: 1200,
+        height: 630,
+        alt: "QuickCV AI简历优化器",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
     title: "QuickCV - 免费AI简历优化器",
-    description: "粘贴简历+职位描述，AI秒出优化版。完全免费！",
+    description: "粘贴简历+职位描述，AI秒出优化版。匹配度分析+ATS关键词优化。完全免费！",
+    images: ["https://opengraph.githubassets.com/1/tyr1105/quickcv-ai"],
   },
   robots: {
     index: true,
     follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
   },
   alternates: {
     canonical: "https://tyr1105.github.io/quickcv-ai/",
@@ -60,11 +78,14 @@ export default function RootLayout({
       price: "0",
       priceCurrency: "CNY",
     },
-    aggregateRating: {
-      "@type": "AggregateRating",
-      ratingValue: "4.8",
-      ratingCount: "120",
-    },
+    featureList: [
+      "AI简历匹配度分析（0-100分）",
+      "ATS关键词自动匹配",
+      "一键简历优化",
+      "中英双语支持",
+      "量化成就优化",
+      "强动词改写",
+    ],
   };
 
   return (
@@ -74,6 +95,7 @@ export default function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
+        <meta name="google-site-verification" content="quickcv-ai" />
       </head>
       <body className="min-h-full flex flex-col bg-white text-gray-900">
         {children}
